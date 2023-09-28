@@ -1,5 +1,10 @@
 const express = require("express");
+const userRoute = require('./src/routes/user.route')
+
 const app = express();
+
+app.use("/soma", userRoute)
+
 
 // ROTA
 // Method HTTP - CRUD (CREATE, READ, UPDATE, DELETE)
@@ -13,9 +18,6 @@ const app = express();
 
 // Function (Callback) - Responsavel por executar algum comando
 
-app.get("/", function (req, res) {
-  const soma = 2 + 3
-  res.send({soma: soma});
-});
+
 
 app.listen(3000);
