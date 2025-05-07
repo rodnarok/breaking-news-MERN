@@ -1,125 +1,94 @@
-import User from "../models/User.js";
+import authService from "../services/auth.service.js";
+import bcrypt from "bcrypt";
+import userRepositories from "../repositories/user.repositories.js";
 
-const createService = (body) => User.create(body);
-
-const findAllService = () => User.find();
-
-const findByIdService = (id) => User.findById(id);
-
-const updateService = (
-  id,
-  name,
-  username,
-  email,
-  password,
-  avatar,
-  background
-) =>
-  User.findOneAndUpdate(
-    { _id: id },
-    { id, name, username, email, password, avatar, background }
-  );
-
-export default {
-  createService,
-  findAllService,
-  findByIdService,
-  updateService,
-};
-
-/*import userRepositories from "../repositories/user.repositories";
-import authService from "../services/auth.service";
-import bcrypt from "bcryptjs";
-
-const createUserController = async ({
+async function createUserService({
   name,
   username,
   email,
   password,
   avatar,
   background,
-}) => {
-  if (!name || !username || !email || !password || !avatar || !background) {
-    res.status(400).send({ message: "Submit all fields for registration" });
-  }
+}) {
+  if (!username || !name || !email || !password || !avatar || !background)
+    throw new Error("Submit all fields for registration");
 
-  const newUser = { name, username, email, password, avatar, background };
+  const foundUser = await userRepositories.findByEmailUserRepository(email);
 
-  const user = await userRepositories.createUserRepository(newUser);
+  if (foundUser) throw new Error("User already exists");
 
-  if (!user) {
-    return res.status(400).send({ message: "Error creating User" });
-  }
-
-  res.status(201).send({
-    message: "User created sucessfully",
-    user: {
-      id: user._id,
-      name,
-      username,
-      email,
-
-      avatar,
-      background,
-    },
+  const user = await userRepositories.createUserRepository({
+    name,
+    username,
+    email,
+    password,
+    avatar,
+    background,
   });
-};
 
-const findAll = async (req, res) => {
-  try {
-    const users = await userService.findAllService();
+  if (!user) throw new Error("Error creating User");
 
-    if (users.length === 0) {
-      return res.status(400).send({ message: "There are no registered users" });
-    }
+  const token = authService.generateToken(user.id);
+  console.log(token);
+  return token;
+}
 
-    res.send(users);
-  } catch (err) {
-    res.status(500).send({ message: err.message });
+async function findAllUserService() {
+  const users = await userRepositories.findAllUserRepository();
+
+  if (users.length === 0) throw new Error("There are no registered users");
+
+  return users;
+}
+
+async function findUserByIdService(userIdParam, userIdLogged) {
+  let idParam;
+  if (!userIdParam) {
+    userIdParam = userIdLogged;
+    idParam = userIdParam;
+  } else {
+    idParam = userIdParam;
   }
+  if (!idParam)
+    throw new Error("Send an id in the parameters to search for the user");
+
+  const user = await userRepositories.findByIdUserRepository(idParam);
+
+  if (!user) throw new Error("User not found");
+
+  return user;
+}
+
+async function updateUserService(
+  { name, username, email, password, avatar, background },
+  userId,
+  userIdLogged
+) {
+  if (!name && !username && !email && !password && !avatar && !background)
+    throw new Error("Submit at least one field to update the user");
+
+  const user = await userRepositories.findByIdUserRepository(userId);
+
+  if (user._id != userIdLogged) throw new Error("You cannot update this user");
+
+  if (password) password = await bcrypt.hash(password, 10);
+
+  await userRepositories.updateUserRepository(
+    userId,
+    name,
+    username,
+    email,
+    password,
+    avatar,
+    background
+  );
+
+  return { message: "User successfully updated!" };
+}
+
+export default {
+  createUserService,
+  findAllUserService,
+  findUserByIdService,
+  updateUserService,
 };
-
-// buscar parametro pelo id
-const findById = async (req, res) => {
-  /* if(!mongoose.Types.ObjectId.isValid(id)){
-        return res.status(400).send({message: "Invalid ID"})
-    }  
-        ******* ****** ESTE CODIGO AQUI E MAIS OUTRO FORAM CRIADOS NOS MIDDLEWARES
-
-  try {
-    const user = req.user;
-
-    res.send(user);
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
-};
-
-const update = async (req, res) => {
-  try {
-    const { name, username, email, password, avatar, background } = req.body;
-
-    if (!name && !username && !email && !password && !avatar && !background) {
-      res.status(400).send({ message: "Submit at least one field for update" });
-    }
-
-    const { id, user } = req;
-
-    await userService.updateService(
-      id,
-      name,
-      username,
-      email,
-      password,
-      avatar,
-      background
-    );
-
-    res.send({ message: "User successfully updated" });
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
-};
-
-export default { create, findAll, findById, update };
-*/

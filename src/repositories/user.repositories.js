@@ -1,10 +1,27 @@
 import User from "../models/User.js";
 
-const createUserRepository = (body) => User.create(body);
+const findByEmailUserRepository = (email) => User.findOne({ email: email });
+
+const createUserRepository = ({
+  name,
+  username,
+  email,
+  password,
+  avatar,
+  background,
+}) =>
+  User.create({
+    name,
+    username,
+    email,
+    password,
+    avatar,
+    background,
+  });
 
 const findAllUserRepository = () => User.find();
 
-const findByIdUserRepository = (id) => User.findById(id);
+const findByIdUserRepository = (idUser) => User.findById(idUser);
 
 const updateUserRepository = (
   id,
@@ -16,11 +33,24 @@ const updateUserRepository = (
   background
 ) =>
   User.findOneAndUpdate(
-    { _id: id },
-    { id, name, username, email, password, avatar, background }
+    {
+      _id: id,
+    },
+    {
+      name,
+      username,
+      email,
+      password,
+      avatar,
+      background,
+    },
+    {
+      rawResult: true,
+    }
   );
 
 export default {
+  findByEmailUserRepository,
   createUserRepository,
   findAllUserRepository,
   findByIdUserRepository,

@@ -1,31 +1,28 @@
+import newsController from "../controllers/news.controller.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+import { validId } from "../middlewares/global.middlewares.js";
+
 import { Router } from "express";
-const router = Router();
 
-import {
-  create,
-  findAll,
-  topNews,
-  findById,
-  searchByTitle,
-  byUser,
-  update,
-  erase,
-  likeNews,
-  addComment,
-  deleteComment,
-} from "../controllers/news.controller.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js";
+const newsRouter = Router();
 
-router.post("/", authMiddleware, create);
-router.get("/", findAll);
-router.get("/top", topNews);
-router.get("/search", searchByTitle);
-router.get("/byUser", authMiddleware, byUser);
-router.get("/:id", authMiddleware, findById);
-router.patch("/:id", authMiddleware, update);
-router.delete("/:id", authMiddleware, erase);
-router.patch("/like/:id", authMiddleware, likeNews);
-router.patch("/comment/:id", authMiddleware, addComment);
-router.patch("/comment/:idNews/:idComment", authMiddleware, deleteComment);
+newsRouter.get("/", newsController.findAllNewsController);
+newsRouter.get("/top", newsController.topNewsController);
+newsRouter.get("/search", newsController.searchNewsController);
 
-export default router;
+newsRouter.use(authMiddleware);
+newsRouter.post("/create", newsController.createNewsController);
+
+newsRouter.use(validId);
+newsRouter.get("/byIdNews/:id", newsController.findNewsByIdController);
+newsRouter.get("/byUserId", newsController.findNewsByUserIdController);
+newsRouter.patch("/update/:id", newsController.updateNewsController);
+newsRouter.delete("/delete/:id", newsController.deleteNewsController);
+newsRouter.patch("/:id/like", newsController.likeNewsController);
+newsRouter.patch("/:id/comment", newsController.commentNewsController);
+newsRouter.patch(
+  "/:id/:idComment/comment",
+  newsController.commentDeleteNewsController
+);
+
+export default newsRouter;
